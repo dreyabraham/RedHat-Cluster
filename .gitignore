@@ -1,0 +1,10 @@
+*.pem
+*.ppk
+
+
+playbooks/.passwd
+
+terraform.tfstate
+.terraform.lock.hcl
+.terraform/
+test/
