@@ -9,8 +9,8 @@ terraform {
 
 provider "aws" {
   region = "us-east-2"
-  access_key="AKIA4ZNJHTLCSTN3FEGV"
-  secret_key="pQJwQaT8XaAqvD3Ce7aFdRHcL9cnmGMimhvidHKj"
+  #access_key="YOUR ACCESS KEY"
+  #secret_key="YOUR SECRET KEY"
 }
 
 resource "aws_vpc" "hacluster_vpc" {
