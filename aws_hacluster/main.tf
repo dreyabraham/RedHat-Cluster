@@ -252,6 +252,57 @@ resource "aws_security_group" "allowed_rules" {
   }
 }
 
+resource "aws_instance" "iscsi-target-server" {
+  #for_each = data.aws_subnet_ids.subnet_list.ids 
+  ami           = var.aws_ami_id
+  instance_type = var.instance_type
+  key_name      = var.private_key_name
+  subnet_id     = aws_subnet.hapublic-1.id
+  #subnet_id = each.value
+  vpc_security_group_ids = [aws_security_group.allowed_rules.id]
+  tags = {
+    Name = "iscsi-target-server"
+  }
+  
+}
+
+resource "null_resource" "setup-iscsi-target" {
+
+  depends_on = [aws_instance.iscsi-target-server]
+  # Ansible requires that the remote system has python already installed in it
+  provisioner "remote-exec" {
+    inline = ["sudo yum install targetcli lvm2 -y"]
+  }
+  connection {
+    type        = "ssh"
+    host        =aws_instance.iscsi-target-server.public_ip
+    private_key = file(var.private_key)
+    user        = var.ansible_user
+  }
+
+}
+
+resource "aws_ebs_volume" "iscsi-volume" {
+  depends_on        = [aws_instance.iscsi-target-server]
+  availability_zone = aws_instance.iscsi-target-server.availability_zone
+  size              = var.ebs_size
+  # multi_attach_enabled = true
+
+  tags = {
+    Name = "ebs-vol"
+  }
+}
+
+resource "aws_volume_attachment" "ebs_att-1" {
+  device_name  = var.ebs_device_name
+  volume_id    = aws_ebs_volume.iscsi-volume.id
+  instance_id  = aws_instance.iscsi-target-server.id
+  force_detach = true
+  depends_on = [
+    aws_instance.iscsi-target-server,
+    aws_ebs_volume.iscsi-volume
+  ]
+}
 # Now launch the 4 instances in the 2 different public subnets
 
 resource "aws_instance" "ha-nodes-1" {
@@ -274,56 +325,6 @@ resource "aws_instance" "ha-nodes-2" {
   subnet_id     = aws_subnet.hapublic-2.id
   #subnet_id = each.value
   vpc_security_group_ids = [aws_security_group.allowed_rules.id]
-}
-
-# Create an EBS Volume
-resource "aws_ebs_volume" "terra-vol-1" {
-  depends_on        = [aws_instance.ha-nodes-1]
-  availability_zone = aws_instance.ha-nodes-1[0].availability_zone
-  size              = var.ebs_size
-  # multi_attach_enabled = true
-
-  tags = {
-    Name = "ebs-vol"
-  }
-}
-
-# Now attach this volume to the ec2 instances
-resource "aws_volume_attachment" "ebs_att-1" {
-  count        = var.instances_per_subnet
-  device_name  = var.ebs_device_name
-  volume_id    = aws_ebs_volume.terra-vol-1.id
-  instance_id  = element(aws_instance.ha-nodes-1.*.id, count.index)
-  force_detach = true
-  depends_on = [
-    aws_instance.ha-nodes-1,
-    aws_ebs_volume.terra-vol-1
-  ]
-}
-
-# Create an EBS Volume
-resource "aws_ebs_volume" "terra-vol-2" {
-  depends_on        = [aws_instance.ha-nodes-2]
-  availability_zone = aws_instance.ha-nodes-2[0].availability_zone
-  size              = var.ebs_size
-  # multi_attach_enabled = true
-
-  tags = {
-    Name = "ebs-vol-2"
-  }
-}
-
-# Now attach this volume to the ec2 instances
-resource "aws_volume_attachment" "ebs_att-2" {
-  count        = var.instances_per_subnet
-  device_name  = var.ebs_device_name
-  volume_id    = aws_ebs_volume.terra-vol-2.id
-  instance_id  = element(aws_instance.ha-nodes-2.*.id, count.index)
-  force_detach = true
-  depends_on = [
-    aws_instance.ha-nodes-2,
-    aws_ebs_volume.terra-vol-2
-  ]
 }
 
 

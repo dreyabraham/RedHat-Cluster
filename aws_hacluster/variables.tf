@@ -6,7 +6,7 @@ variable "instances_per_subnet" {
 variable "ebs_size" {
   description = "Number of instance launched in public subnet"
   type        = number
-  default     = 8
+  default     = 10
 }
 
 variable "ebs_device_name" {
@@ -24,7 +24,7 @@ variable "instance_type" {
 variable "aws_ami_id" {
   description = "Node ami id"
   type        = string
-  default     = "ami-0a8b4cd432b1c3063"
+  default     = "ami-05548f9cecf47b442"
 }
 
 variable "ansible_user" {
@@ -36,7 +36,7 @@ variable "ansible_user" {
 variable "private_key" {
   description = "User required to login to ec2-instance by ansible"
   type        = string
-  default     = "ha-cluster.pem" #"/home/ec2-user/aws_hacluster_terraform/aws_hacluster/Your key"
+  default     = "/home/ubuntu/redhat-cluster/aws_hacluster/ha-cluster.pem" #"/home/ec2-user/aws_hacluster_terraform/aws_hacluster/Your key"
 }
 
 variable "private_key_name" {
