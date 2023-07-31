@@ -24,13 +24,13 @@ variable "instance_type" {
 variable "aws_ami_id" {
   description = "Node ami id"
   type        = string
-  default     = "ami-05548f9cecf47b442"
+  default     = "ami-002070d43b0a4f171"
 }
 
 variable "ansible_user" {
   description = "User with which ansible configure"
   type        = string
-  default     = "ec2-user"
+  default     = "centos"
 }
 
 variable "private_key" {
