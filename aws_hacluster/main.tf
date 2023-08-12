@@ -251,7 +251,7 @@ resource "aws_security_group" "allowed_rules" {
     "Name" = "HA-firewall-rules"
   }
 }
-
+# Create the server for the iscsi target storage
 resource "aws_instance" "iscsi-target-server" {
   #for_each = data.aws_subnet_ids.subnet_list.ids 
   ami           = var.aws_ami_id
@@ -269,7 +269,6 @@ resource "aws_instance" "iscsi-target-server" {
 resource "null_resource" "setup-iscsi-target" {
 
   depends_on = [aws_instance.iscsi-target-server]
-  # Ansible requires that the remote system has python already installed in it
   provisioner "remote-exec" {
     inline = ["sudo yum install targetcli lvm2 -y"]
   }
@@ -282,6 +281,7 @@ resource "null_resource" "setup-iscsi-target" {
 
 }
 
+# Create EBS volume for the iscsi target
 resource "aws_ebs_volume" "iscsi-volume" {
   depends_on        = [aws_instance.iscsi-target-server]
   availability_zone = aws_instance.iscsi-target-server.availability_zone
@@ -293,6 +293,7 @@ resource "aws_ebs_volume" "iscsi-volume" {
   }
 }
 
+# Attache the ebs volume to the iscsi target machine
 resource "aws_volume_attachment" "ebs_att-1" {
   device_name  = var.ebs_device_name
   volume_id    = aws_ebs_volume.iscsi-volume.id
@@ -375,7 +376,10 @@ resource "null_resource" "setupAnsible" {
 	echo "${aws_instance.ha-nodes-1[0].public_dns} private_ip=${aws_instance.ha-nodes-1[0].private_dns} ansible_user=${var.ansible_user} ansible_ssh_private_key_file=${var.private_key}" | tee -a ./playbooks/inventory.ini;
 
   echo "${aws_instance.ha-nodes-2[0].public_dns} private_ip=${aws_instance.ha-nodes-2[0].private_dns} ansible_user=${var.ansible_user} ansible_ssh_private_key_file=${var.private_key}" | tee -a ./playbooks/inventory.ini;
- 
+  
+  	echo "[iscsi_target]" | tee -a ./playbooks/inventory.ini;
+    echo "${aws_instance.iscsi-target-server.public_dns} private_ip=${aws_instance.iscsi-target-server.private_dns} ansible_user=${var.ansible_user} ansible_ssh_private_key_file=${var.private_key}" | tee -a ./playbooks/inventory.ini;
+
       	export ANSIBLE_HOST_KEY_CHECKING=False;
          #cd ./playbooks;
         ansible-playbook -i playbooks/inventory.ini playbooks/ha-cluster.yaml --vault-password-file playbooks/.passwd;

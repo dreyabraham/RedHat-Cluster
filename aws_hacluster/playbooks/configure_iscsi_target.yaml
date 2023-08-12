@@ -1,0 +1,28 @@
+---
+- name: Automate LVM setup
+  hosts: iscsi_target
+  become: yes
+
+  vars:
+    device_name: "/dev/xvdh"
+
+  tasks:
+    - name: Create a new partition using fdisk
+      shell: |
+        echo -e "n\np\n1\n2048\n\n+7G\nt\n8e\nw\n" | fdisk "{{ device_name }}"
+      ignore_errors: yes
+      register: fdisk_result
+
+    - name: Refresh the partition table using partprobe
+      shell: "partprobe {{ device_name }}"
+      when: fdisk_result.rc == 0
+
+    - name: Create an LVM physical volume on the newly created partition
+      shell: "pvcreate {{ device_name }}1"
+      when: fdisk_result.rc == 0
+
+    - name: Create an LVM volume group and logical volume
+      shell: |
+        vgcreate iscsi "{{ device_name }}1"
+        lvcreate -L 7G -n iscsi_target iscsi
+      when: fdisk_result.rc == 0

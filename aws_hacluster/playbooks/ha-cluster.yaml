@@ -4,6 +4,10 @@
   become: true
   vars_files:
     - credentials.yaml
+  vars:
+    apache_config_file: "/etc/httpd/conf/httpd.conf"  # Change this to "/etc/apache2/ports.conf" for Debian-based systems
+    virtual_ip: "192.168.1.100"  # Replace this with the desired virtual IP
+
   tasks:
     - name: Enable the HighAvailability Repo
       command: "yum-config-manager --enable HighAvailability"
@@ -11,8 +15,11 @@
     - name: Install the Packages
       yum:
         name:
+          - httpd
           - pacemaker
           - pcs
+          - iscsi-initiator-utils
+          - firewalld
         state: present
 
     - name: Start the pcs service
@@ -102,3 +109,26 @@
       debug:
         msg: "{{ status }}"
       run_once: true
+    
+    - name: Configure Apache to listen on the virtual IP
+      lineinfile:
+        path: "{{ apache_config_file }}"
+        line: "Listen {{ virtual_ip }}:80"
+      when: apache_config_file is defined
+
+    - name: Create Apache as a cluster resource
+      command: >
+        pcs resource create apache ocf:heartbeat:apache
+        configfile="{{ apache_config_file }}"
+        statusurl="http://{{ virtual_ip }}/server-status"
+        op monitor interval=30s
+
+    - name: Enable Apache resource
+      command: "pcs resource enable apache"
+
+    - name: Allow HTTP traffic through the firewall
+      firewalld:
+        service: http
+        permanent: yes
+        state: enabled
+        immediate: yes
