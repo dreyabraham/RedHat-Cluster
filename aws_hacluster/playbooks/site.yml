@@ -1,0 +1,13 @@
+---
+- hosts: hanodes_public
+- name: import cluster setup file
+  import_playbook: ha-cluster.yml
+
+- hosts: cluster_nodes
+- name: import nodes and quorum
+  import_playbook: manage_clusters.yml
+
+# - hosts: malfunctioning_nodes
+# - name: import fencing files
+#   import_playbook: fence.yml
+#   when: nodes_is_down 

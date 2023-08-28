@@ -3,7 +3,7 @@
   gather_facts: false
   become: true
   vars_files:
-    - credentials.yaml
+    - credentials.yml
   vars:
     apache_config_file: "/etc/httpd/conf/httpd.conf"  # Change this to "/etc/apache2/ports.conf" for Debian-based systems
     virtual_ip: "192.168.1.100"  # Replace this with the desired virtual IP
@@ -27,6 +27,10 @@
         name: "pcsd"
         state: started
         enabled: true
+
+    - name: Enable cluster on both nodes
+      command: pcs cluster setup --force --name mycluster {{ groups['hanodes_public'] | join(' ') }}
+      when: inventory_hostname == groups['hanodes_public'][0]
 
     - name: Set the password for the use hacluster
       user:

@@ -4,27 +4,27 @@ provider "aws" {
   #secret_key="pQJwQaT8XaAqvD3Ce7aFdRHcL9cnmGMimhvidHKj"
 }
 
-resource "tls_private_key" "my_key" {
-  algorithm = "RSA"
-}
+# resource "tls_private_key" "my_key" {
+#   algorithm = "RSA"
+# }
 
-resource "aws_key_pair" "deployer" {
-  key_name   = var.private_key_name
-  public_key = tls_private_key.my_key.public_key_openssh
+# resource "aws_key_pair" "deployer" {
+#   key_name   = var.private_key_name
+#   public_key = tls_private_key.my_key.public_key_openssh
 
-  provisioner "local-exec" {
-    command = <<-EOT
-      echo '${tls_private_key.my_key.private_key_pem}' > '${var.private_key_name}'.pem
-      chmod 400 '${var.private_key_name}'.pem
-    EOT
-  }
-}
+#   provisioner "local-exec" {
+#     command = <<-EOT
+#       echo '${tls_private_key.my_key.private_key_pem}' > '${var.private_key_name}'.pem
+#       chmod 400 '${var.private_key_name}'.pem
+#     EOT
+#   }
+# }
 
-#resource "null_resource" "save_key_pair"  {
+# resource "null_resource" "save_key_pair"  {
 #  provisioner "local-exec" {
 #   command = "echo  ${tls_private_key.my_key.private_key_pem} > ha-cluster.pem"
 # }
-#}
+# }
 
 // Create an VPC
 resource "aws_vpc" "hacluster_vpc" {
@@ -366,26 +366,25 @@ resource "null_resource" "setupRemoteNodes-2" {
 }
 
 # # Now we nedd to setup environment for Ansible to run, for this we make use of local-exec & remote-exec modules of terraform
-resource "null_resource" "setupAnsible" {
-  depends_on = [aws_instance.ha-nodes-2]
-  provisioner "local-exec" {
-    command = <<EOT
-      sleep 20;
-      >./playbooks/inventory.ini;
-	echo "[hanodes_public]" | tee -a ./playbooks/inventory.ini;
-	echo "${aws_instance.ha-nodes-1[0].public_dns} private_ip=${aws_instance.ha-nodes-1[0].private_dns} ansible_user=${var.ansible_user} ansible_ssh_private_key_file=${var.private_key}" | tee -a ./playbooks/inventory.ini;
+# resource "null_resource" "setupAnsible" {
+#   depends_on = [aws_instance.ha-nodes-2]
+#   provisioner "local-exec" {
+#     command = <<EOT
+#       >./playbooks/inventory.ini;
+# 	echo "[hanodes_public]" | tee -a ./playbooks/inventory.ini;
+# 	echo "${aws_instance.ha-nodes-1[0].public_dns} private_ip=${aws_instance.ha-nodes-1[0].private_dns} ansible_user=${var.ansible_user} ansible_ssh_private_key_file=${var.private_key}" | tee -a ./playbooks/inventory.ini;
 
-  echo "${aws_instance.ha-nodes-2[0].public_dns} private_ip=${aws_instance.ha-nodes-2[0].private_dns} ansible_user=${var.ansible_user} ansible_ssh_private_key_file=${var.private_key}" | tee -a ./playbooks/inventory.ini;
+#   echo "${aws_instance.ha-nodes-2[0].public_dns} private_ip=${aws_instance.ha-nodes-2[0].private_dns} ansible_user=${var.ansible_user} ansible_ssh_private_key_file=${var.private_key}" | tee -a ./playbooks/inventory.ini;
   
-  	echo "[iscsi_target]" | tee -a ./playbooks/inventory.ini;
-    echo "${aws_instance.iscsi-target-server.public_dns} private_ip=${aws_instance.iscsi-target-server.private_dns} ansible_user=${var.ansible_user} ansible_ssh_private_key_file=${var.private_key}" | tee -a ./playbooks/inventory.ini;
+#   	echo "[iscsi_target]" | tee -a ./playbooks/inventory.ini;
+#     echo "${aws_instance.iscsi-target-server.public_dns} private_ip=${aws_instance.iscsi-target-server.private_dns} ansible_user=${var.ansible_user} ansible_ssh_private_key_file=${var.private_key}" | tee -a ./playbooks/inventory.ini;
 
-      	export ANSIBLE_HOST_KEY_CHECKING=False;
-         #cd ./playbooks;
-        ansible-playbook -i playbooks/inventory.ini playbooks/ha-cluster.yaml --vault-password-file playbooks/.passwd;
-    	EOT
-  }
+#       	export ANSIBLE_HOST_KEY_CHECKING=False;
+#          #cd ./playbooks;
+#         ansible-playbook -i playbooks/inventory.ini playbooks/ha-cluster.yaml --vault-password-file playbooks/.passwd;
+#     	EOT
+#   }
 
-}
+# }
 
 

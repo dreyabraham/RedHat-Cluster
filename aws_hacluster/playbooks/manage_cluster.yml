@@ -1,0 +1,62 @@
+---
+- name: Manage Red Hat Cluster Nodes and Quorum
+  hosts: cluster_nodes
+  become: yes
+  
+  tasks:
+    - name: Install Required Packages
+      package:
+        name: ["pcs", "corosync", "pacemaker"]
+        state: present
+        
+    - name: Start and Enable Services
+      systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - pcsd
+        - corosync
+        - pacemaker
+
+- name: Add new nodes to HA cluster
+  hosts: cluster_nodes
+  tasks:
+    - name: Install required packages
+      yum:
+        name: pacemaker corosync
+
+    - name: Configure cluster settings
+      template:
+        src: cluster_config.j2
+        dest: /etc/cluster/cluster.conf
+
+    - name: Join node to cluster
+      shell: pcs cluster node add {{ inventory_hostname }}
+
+- name: Remove nodes from HA cluster
+  hosts: ha_cluster_nodes
+  tasks:
+    - name: Evacuate resources from node
+      shell: pcs resource cleanup {{ inventory_hostname }}
+
+    - name: Remove node from cluster
+      shell: pcs cluster node remove {{ inventory_hostname }}
+
+    - name: Uninstall cluster packages
+      yum:
+        name: pacemaker corosync
+        state: absent
+
+- name: Manage quorum settings
+  hosts: ha_cluster_nodes
+  tasks:
+    - name: Check number of nodes
+      shell: pcs status nodes | grep '^Online' | wc -l
+      register: online_nodes
+
+    - name: Adjust quorum based on nodes
+      shell: >
+        pcs quorum {{ "disable" if online_nodes.stdout|int <= 1 else "enable" }}
+
+

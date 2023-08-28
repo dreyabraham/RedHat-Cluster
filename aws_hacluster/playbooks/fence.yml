@@ -1,0 +1,8 @@
+---
+- name: Fence Malfunctioning Node
+  hosts: malfunctioning_node
+  gather_facts: no
+  tasks:
+    - name: Power off node using IPMI
+      command: fence_ipmilan --ip=<IP_ADDRESS> --username=<USERNAME> --password=<PASSWORD> --action=off
+#Replace <IP_ADDRESS>, <USERNAME>, and <PASSWORD> with the appropriate values for your environment.

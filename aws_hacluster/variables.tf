@@ -36,7 +36,7 @@ variable "ansible_user" {
 variable "private_key" {
   description = "User required to login to ec2-instance by ansible"
   type        = string
-  default     = "/home/ubuntu/redhat-cluster/aws_hacluster/ha-cluster.pem" #"/path/to/Your key"
+  default     = "C:/Users/admin/Documents/Dreys_workspace/RedHat-Cluster/aws_hacluster/ha-cluster.pem" #"/path/to/Your key"
 }
 
 variable "private_key_name" {
