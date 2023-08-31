@@ -42,7 +42,7 @@ resource "aws_subnet" "hapublic-1" {
 
   vpc_id                  = aws_vpc.hacluster_vpc.id
   cidr_block              = "192.168.0.0/24"
-  availability_zone       = "us-east-1a" // In which zone does this subnet would be created
+  availability_zone       = "us-west-1a" // In which zone does this subnet would be created
   map_public_ip_on_launch = true         // Assign public ip to the instances launched into this subnet
 
   tags = {
@@ -55,7 +55,7 @@ resource "aws_subnet" "hapublic-2" {
 
   vpc_id                  = aws_vpc.hacluster_vpc.id
   cidr_block              = "192.168.1.0/24"
-  availability_zone       = "us-east-1b" // In which zone does this subnet would be created
+  availability_zone       = "us-west-1c" // In which zone does this subnet would be created
   map_public_ip_on_launch = true         // Assign public ip to the instances launched into this subnet
 
   tags = {
@@ -306,64 +306,6 @@ resource "aws_volume_attachment" "ebs_att-1" {
 }
 # Now launch the 4 instances in the 2 different public subnets
 
-# resource "aws_instance" "ha-nodes-1" {
-#   #for_each = data.aws_subnet_ids.subnet_list.ids 
-#   count         = var.instances_per_subnet
-#   ami           = var.aws_ami_id
-#   instance_type = var.instance_type
-#   key_name      = var.private_key_name
-#   subnet_id     = aws_subnet.hapublic-1.id
-#   #subnet_id = each.value
-#   vpc_security_group_ids = [aws_security_group.allowed_rules.id]
-# }
-
-# resource "aws_instance" "ha-nodes-2" {
-#   #for_each = data.aws_subnet_ids.subnet_list.ids 
-#   count         = var.instances_per_subnet
-#   ami           = var.aws_ami_id
-#   instance_type = var.instance_type
-#   key_name      = var.private_key_name
-#   subnet_id     = aws_subnet.hapublic-2.id
-#   #subnet_id = each.value
-#   vpc_security_group_ids = [aws_security_group.allowed_rules.id]
-# }
-
-
-# # Prepare the ha cluster nodes to be served through ansible
-
-# resource "null_resource" "setupRemoteNodes-1" {
-#   count = var.instances_per_subnet
-
-#   depends_on = [aws_instance.ha-nodes-1]
-#   # Ansible requires that the remote system has python already installed in it
-#   provisioner "remote-exec" {
-#     inline = ["sudo yum install python3 -y"]
-#   }
-#   connection {
-#     type        = "ssh"
-#     host        = element(aws_instance.ha-nodes-1.*.public_ip, count.index)
-#     private_key = file(var.private_key)
-#     user        = var.ansible_user
-#   }
-
-# }
-
-# resource "null_resource" "setupRemoteNodes-2" {
-#   count = var.instances_per_subnet
-
-#   depends_on = [aws_instance.ha-nodes-2]
-#   # Ansible requires that the remote system has python already installed in it
-#   provisioner "remote-exec" {
-#     inline = ["sudo yum install python3 -y"]
-#   }
-#   connection {
-#     type        = "ssh"
-#     host        = element(aws_instance.ha-nodes-2.*.public_ip, count.index)
-#     private_key = file(var.private_key)
-#     user        = var.ansible_user
-#   }
-
-# }
 
 # # Now we nedd to setup environment for Ansible to run, for this we make use of local-exec & remote-exec modules of terraform
 # resource "null_resource" "setupAnsible" {
