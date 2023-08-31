@@ -24,7 +24,7 @@ variable "instance_type" {
 variable "aws_ami_id" {
   description = "Node ami id"
   type        = string
-  default     = "ami-002070d43b0a4f171"
+  default     = "ami-0dee0f906cf114191"
 }
 
 variable "ansible_user" {
