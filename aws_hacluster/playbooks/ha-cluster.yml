@@ -9,8 +9,8 @@
     virtual_ip: "192.168.1.100"  # Replace this with the desired virtual IP
 
   tasks:
-    - name: Enable the HighAvailability Repo
-      command: "yum-config-manager --enable HighAvailability"
+    - name: update the servers
+      command: "sudo yum update"
 
     - name: Install the Packages
       yum:
