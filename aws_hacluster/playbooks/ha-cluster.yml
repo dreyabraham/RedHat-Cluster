@@ -10,7 +10,7 @@
 
   tasks:
     - name: update the servers
-      command: "sudo yum update"
+      command: "sudo yum update -y"
 
     - name: Install the Packages
       yum:
